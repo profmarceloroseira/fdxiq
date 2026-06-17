@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Disciplina {
+  id    Int    @id @default(autoincrement())
+  nome  String @unique
+  temas Tema[]
+}
+
+model Tema {
+  id           Int       @id @default(autoincrement())
+  nome         String
+  disciplinaId Int
+  disciplina   Disciplina @relation(fields: [disciplinaId], references: [id])
+  subtemas     Subtema[]
+
+  @@unique([nome, disciplinaId])
+}
+
+model Subtema {
+  id       Int       @id @default(autoincrement())
+  nome     String
+  temaId   Int
+  tema     Tema      @relation(fields: [temaId], references: [id])
+  questoes Questao[]
+
+  @@unique([nome, temaId])
+}
+
+model Questao {
+  id             Int            @id @default(autoincrement())
+  enunciado      String
+  tipo           String         @default("multipla_escolha")
+  dificuldade    String         @default("medio")
+  secao          String         @default("problema")
+  fonte          String?
+  anoFonte       Int?
+  resolucao      String?
+  gabarito       String?
+  subtemaId      Int?
+  subtema        Subtema?       @relation(fields: [subtemaId], references: [id])
+  alternativas   Alternativa[]
+  provasQuestoes ProvaQuestao[]
+  tags           TagQuestao[]
+  criadoEm       DateTime       @default(now())
+  atualizadoEm   DateTime       @updatedAt
+  ativo          Boolean        @default(true)
+}
+
+model Alternativa {
+  id        Int     @id @default(autoincrement())
+  letra     String
+  texto     String
+  correta   Boolean @default(false)
+  questaoId Int
+  questao   Questao @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+}
+
+model Tag {
+  id       Int          @id @default(autoincrement())
+  nome     String       @unique
+  questoes TagQuestao[]
+}
+
+model TagQuestao {
+  questaoId Int
+  tagId     Int
+  questao   Questao @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([questaoId, tagId])
+}
+
+model Usuario {
+  id       Int      @id @default(autoincrement())
+  nome     String
+  email    String   @unique
+  papel    String   @default("professor")
+  provas   Prova[]
+  criadoEm DateTime @default(now())
+}
+
+model Prova {
+  id           Int            @id @default(autoincrement())
+  titulo       String
+  instrucoes   String?
+  usuarioId    Int
+  usuario      Usuario        @relation(fields: [usuarioId], references: [id])
+  questoes     ProvaQuestao[]
+  criadoEm     DateTime       @default(now())
+  atualizadoEm DateTime       @updatedAt
+}
+
+model ProvaQuestao {
+  provaId   Int
+  questaoId Int
+  ordem     Int
+  prova     Prova   @relation(fields: [provaId], references: [id], onDelete: Cascade)
+  questao   Questao @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+
+  @@id([provaId, questaoId])
+}
