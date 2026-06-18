@@ -7,14 +7,17 @@ datasource db {
   provider = "sqlite"
 }
 
+// ─── Conteúdo ────────────────────────────────────────────────
+
 model Disciplina {
   id    Int    @id @default(autoincrement())
   nome  String @unique
+  ordem Int    @default(0)
   temas Tema[]
 }
 
 model Tema {
-  id           Int       @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   nome         String
   disciplinaId Int
   disciplina   Disciplina @relation(fields: [disciplinaId], references: [id])
@@ -48,18 +51,20 @@ model Questao {
   alternativas   Alternativa[]
   provasQuestoes ProvaQuestao[]
   tags           TagQuestao[]
+  respostas      Resposta[]
   criadoEm       DateTime       @default(now())
   atualizadoEm   DateTime       @updatedAt
   ativo          Boolean        @default(true)
 }
 
 model Alternativa {
-  id        Int     @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   letra     String
   texto     String
-  correta   Boolean @default(false)
+  correta   Boolean    @default(false)
   questaoId Int
-  questao   Questao @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+  questao   Questao    @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+  respostas Resposta[]
 }
 
 model Tag {
@@ -77,14 +82,58 @@ model TagQuestao {
   @@id([questaoId, tagId])
 }
 
+// ─── Usuários e autenticação ──────────────────────────────────
+
 model Usuario {
-  id       Int      @id @default(autoincrement())
-  nome     String
-  email    String   @unique
-  papel    String   @default("professor")
-  provas   Prova[]
-  criadoEm DateTime @default(now())
+  id               Int       @id @default(autoincrement())
+  nome             String
+  email            String    @unique
+  senhaHash        String?
+  papel            String    @default("candidato") // candidato | admin
+  plano            String    @default("free")      // free | monthly | annual
+  planoExpiraEm    DateTime?
+  stripeCustomerId String?
+  ativo            Boolean   @default(true)
+  criadoEm        DateTime  @default(now())
+  atualizadoEm    DateTime  @updatedAt
+
+  provas    Prova[]
+  sessoes   Sessao[]
+  respostas Resposta[]
 }
+
+// ─── Sessões de prática / simulado ───────────────────────────
+
+model Sessao {
+  id           Int       @id @default(autoincrement())
+  usuarioId    Int
+  usuario      Usuario   @relation(fields: [usuarioId], references: [id])
+  tipo         String    @default("pratica") // pratica | simulado
+  disciplinaId Int?
+  iniciadoEm   DateTime  @default(now())
+  finalizadoEm DateTime?
+  respostas    Resposta[]
+}
+
+// ─── Respostas individuais (base para TRI futuramente) ────────
+
+model Resposta {
+  id             Int         @id @default(autoincrement())
+  usuarioId      Int
+  questaoId      Int
+  alternativaId  Int?
+  sessaoId       Int?
+  correta        Boolean
+  tempoSegundos  Int?        // tempo gasto nesta questão
+  criadoEm       DateTime    @default(now())
+
+  usuario      Usuario     @relation(fields: [usuarioId], references: [id])
+  questao      Questao     @relation(fields: [questaoId], references: [id])
+  alternativa  Alternativa? @relation(fields: [alternativaId], references: [id])
+  sessao       Sessao?     @relation(fields: [sessaoId], references: [id])
+}
+
+// ─── Provas (montador de provas para professores) ─────────────
 
 model Prova {
   id           Int            @id @default(autoincrement())
