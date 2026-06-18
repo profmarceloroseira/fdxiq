@@ -27,7 +27,7 @@ export default async function AdminPage() {
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-blue-700">SuperProf — Admin</h1>
+            <h1 className="text-xl font-bold text-blue-700">FDX IQ — Admin</h1>
             <p className="text-xs text-gray-500">Gerenciamento do banco de questões</p>
           </div>
           <div className="flex gap-3">
@@ -124,9 +124,6 @@ function DeleteButton({ id }: { id: number }) {
       <button
         type="submit"
         className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50"
-        onClick={(e) => {
-          if (!confirm("Desativar esta questão?")) e.preventDefault();
-        }}
       >
         Remover
       </button>
